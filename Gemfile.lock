@@ -142,6 +142,7 @@ DEPENDENCIES
   moonshot (~> 1.1.0.beta4)
   mysql2
   pry-byebug
+  require_all
   rspec
   sequel
   sinatra

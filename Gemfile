@@ -8,6 +8,8 @@ gem 'sinatra'
 gem 'sequel'
 gem 'rspec'
 
+gem 'require_all'
+
 group :development do
   gem 'sqlite3'
 end
