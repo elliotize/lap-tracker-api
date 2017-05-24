@@ -6,4 +6,10 @@ gem 'pry-byebug'
 
 gem 'sinatra'
 gem 'sequel'
+gem 'rspec'
 
+group :development do
+  gem 'sqlite3'
+end
+
+gem 'mysql2'
