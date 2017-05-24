@@ -1,0 +1,37 @@
+{
+  "builders":[
+    {
+      "type": "docker",
+      "image": "centos",
+      "export_path": "image.tar",
+      "privileged": true,
+      "run_command": ["-d", "-i", "-t", "{{.Image}}", "/usr/sbin/init"]
+    }
+  ],
+  "provisioners":[
+    {
+      "type": "shell",
+      "inline": [
+        "rpm -ivh https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm",
+        "yum install -y puppet-agent"
+      ]
+    },
+    {
+      "type": "puppet-masterless",
+      "puppet_bin_dir": "/opt/puppetlabs/bin/",
+      "manifest_file": "../puppet/manifests/{{user `server_type`}}.pp",
+      "module_paths": [
+        "../puppet/modules",
+        "../puppet/.tmp/librarian/cache/source/puppet/forge/forgeapi_puppetlabs_com"
+      ],
+      "prevent_sudo" : true
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "docker-import",
+      "repository": "{{user `server_type`}}",
+      "tag": "latest"
+    }
+  ]
+}

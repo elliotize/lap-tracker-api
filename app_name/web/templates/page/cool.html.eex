@@ -1,0 +1,4 @@
+<div class="jumbotron">
+  <h2><%= gettext "Welcome %{name}", name: "AppName!" %></h2>
+  <p class="lead">Musshshshshshs<br />This is to see how quicky things change</p>
+</div>

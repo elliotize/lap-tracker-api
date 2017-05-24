@@ -1,0 +1,383 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Parameters" : {
+        "ArtifactBucket" : {
+            "Type" : "String",
+            "Default" : "phoenix-service",
+            "Description" : "The S3 bucket that contains the build artifacts that CodeDeploy will deploy."
+        },
+        "AvailabilityZone1" : {
+            "Type": "AWS::EC2::AvailabilityZone::Name",
+            "Default": "us-east-1a"
+        },
+        "AvailabilityZone2" : {
+            "Type": "AWS::EC2::AvailabilityZone::Name",
+            "Default": "us-east-1c"
+        },
+        "DesiredCapacity" : {
+            "Type" : "Number",
+            "Default" : "2",
+            "Description" : "The desired number of EC2 instances used for the application."
+        },
+        "MasterUsername": {
+          "Type" : "String",
+          "Default" : "phoenix",
+          "Description" : "The desired number of EC2 instances used for the application."
+        },
+        "MasterPassword": {
+          "Type" : "String",
+          "Default" : "phoenix123",
+          "Description" : "The desired number of EC2 instances used for the application."
+        }
+    },
+    "Outputs" : {
+        "URL" : {
+            "Description" : "The application's URL",
+            "Value" : { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt" : [ "LoadBalancer", "DNSName" ] } ] ] }
+        }
+    },
+    "Mappings" : {
+        "RegionMap" : {
+            "ap-northeast-1" :   { "AMI" : "" },
+            "ap-southeast-1" :   { "AMI" : "" },
+            "ap-southeast-2" :   { "AMI" : "" },
+            "eu-central-1" :     { "AMI" : "" },
+            "eu-west-1" :        { "AMI" : "" },
+            "us-east-1" :        { "AMI" : "ami-13572c05" },
+            "us-west-2" :        { "AMI" : "" }
+        }
+    },
+    "Resources" : {
+
+        "VPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : "10.176.0.0/16",
+                "Tags" : [
+                    { "Key" : "Name", "Value" : { "Ref" : "AWS::StackName" } }
+                ]
+            }
+        },
+
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway"
+        },
+        "VPCGatewayAttachment" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "InternetGatewayId" : { "Ref" : "InternetGateway" },
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+
+        "SubnetZone1" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : { "Ref" : "AvailabilityZone1" },
+                "CidrBlock" : "10.176.10.0/26",
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "SubnetZone2" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : { "Ref" : "AvailabilityZone2" },
+                "CidrBlock" : "10.176.10.64/26",
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "RouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "Route" : {
+            "Type" : "AWS::EC2::Route",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "RouteTable" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "SubnetRouteTableAssociationZone1" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+            "RouteTableId" : { "Ref" : "RouteTable" },
+                "SubnetId" : { "Ref" : "SubnetZone1" }
+            }
+        },
+        "SubnetRouteTableAssociationZone2" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "RouteTable" },
+                "SubnetId" : { "Ref" : "SubnetZone2" }
+            }
+        },
+
+        "SecurityGroupElb" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "GroupDescription" : "SecurityGroupElb",
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "4000",
+                        "ToPort" : "4000",
+                        "CidrIp" : "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "LoadBalancer" : {
+            "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties" : {
+                "Listeners" : [
+                    {
+                        "InstancePort" : "4000",
+                        "LoadBalancerPort" : "4000",
+                        "Protocol" : "HTTP"
+                    }
+                ],
+                "CrossZone" : true,
+                "ConnectionDrainingPolicy" : {
+                    "Enabled" : true,
+                    "Timeout" : 15
+                },
+                "Scheme" : "internet-facing",
+                "SecurityGroups" : [
+                    { "Ref" : "SecurityGroupElb" }
+                ],
+                "HealthCheck" : {
+                    "HealthyThreshold" : "3",
+                    "Interval" : "15",
+                    "Target" : "HTTP:4000/",
+                    "Timeout" : "5",
+                    "UnhealthyThreshold" : "3"
+                },
+                "Subnets" : [
+                    { "Ref" : "SubnetZone1" },
+                    { "Ref" : "SubnetZone2" }
+                ]
+            }
+        },
+
+        "Role" : {
+            "Type" : "AWS::IAM::Role",
+            "Properties" : {
+                "Path" : "/",
+                "AssumeRolePolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Statement" : [
+                        {
+                            "Effect" : "Allow",
+                            "Principal" : {
+                                "Service" : [ "ec2.amazonaws.com" ]
+                            },
+                            "Action" : [ "sts:AssumeRole" ]
+                        }
+                    ]
+                },
+                "Policies" : [
+                    {
+                        "PolicyName" : "ArtifactAccess",
+                        "PolicyDocument" : {
+                            "Version" : "2012-10-17",
+                            "Statement" : [
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "s3:GetObject"
+                                    ],
+                                    "Resource" : { "Fn::Join" : [ "", [ "arn:aws:s3:::", { "Ref" : "ArtifactBucket" }, "/*" ] ] }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName" : "ElbAutoDrainAccess",
+                        "PolicyDocument" : {
+                            "Version" : "2012-10-17",
+                            "Statement" : [
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "elasticloadbalancing:Describe*",
+                                        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                                        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                                        "autoscaling:Describe*",
+                                        "autoscaling:EnterStandby",
+                                        "autoscaling:ExitStandby",
+                                        "autoscaling:UpdateAutoScalingGroup"
+                                    ],
+                                    "Resource" : "*"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName" : "EC2ASGAccess",
+                        "PolicyDocument" : {
+                            "Version" : "2012-10-17",
+                            "Statement" : [
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "ec2:Describe*"
+                                    ],
+                                    "Resource" : "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "InstanceProfile" : {
+            "Type" : "AWS::IAM::InstanceProfile",
+            "Properties" : {
+                "Path" : "/",
+                "Roles" : [
+                    { "Ref" : "Role" }
+                ]
+            }
+        },
+        "SecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "GroupDescription" : "SecurityGroup",
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "4000",
+                        "ToPort" : "4000",
+                        "SourceSecurityGroupId" : { "Ref" : "SecurityGroupElb" }
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "22",
+                        "ToPort" : "22",
+                        "CidrIp" : "0.0.0.0/0"
+                    }
+                ],
+                "SecurityGroupEgress" : [
+                    {
+                        "IpProtocol" : "-1",
+                        "FromPort" : "-1",
+                        "ToPort" : "-1",
+                        "CidrIp" : "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+
+        "LaunchConfiguration" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Properties" : {
+                "AssociatePublicIpAddress" : true,
+                "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ] },
+                "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+                "InstanceType" : "t2.small",
+                "SecurityGroups" : [ { "Ref" : "SecurityGroup" } ],
+                "KeyName": "hosting-dev",
+                "UserData" : {
+                    "Fn::Base64" : { "Fn::Join" : [ "\n", [
+                        "#!/bin/bash -v",
+                        "curl https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install > /tmp/install.sh",
+                        "chmod +x /tmp/install.sh",
+                        "sudo /tmp/install.sh auto",
+                        "rm /tmp/install.sh",
+                        "DB_USER=", { "Ref" : "MasterUsername" },
+                        "DB_PASSWORD=", { "Ref" : "MasterPassword" }
+                    ] ] }
+                }
+            }
+        },
+        "AutoScalingGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "DependsOn" : [ "VPCGatewayAttachment" ],
+            "Properties" : {
+                "AvailabilityZones" : [
+                    { "Ref" : "AvailabilityZone1" },
+                    { "Ref" : "AvailabilityZone2" }
+                ],
+                "DesiredCapacity" : { "Ref" : "DesiredCapacity" },
+                "HealthCheckGracePeriod" : "9000",
+                "HealthCheckType" : "ELB",
+                "LaunchConfigurationName" : { "Ref" : "LaunchConfiguration" },
+                "LoadBalancerNames" : [ { "Ref" : "LoadBalancer" } ],
+                "MaxSize" : 5,
+                "MinSize" : { "Ref" : "DesiredCapacity" },
+                "TerminationPolicies" : [ "OldestLaunchConfiguration" ],
+                "VPCZoneIdentifier" : [
+                    { "Ref" : "SubnetZone1" },
+                    { "Ref" : "SubnetZone2" }
+                ]
+            },
+            "UpdatePolicy" : {
+                "AutoScalingRollingUpdate" : {
+                    "MaxBatchSize" : "1",
+                    "MinInstancesInService" : { "Ref" : "DesiredCapacity" }
+                }
+            }
+        },
+        "DbSecurityGroup":{
+            "Type":"AWS::EC2::SecurityGroup",
+            "Properties":{
+                "VpcId":{
+                    "Ref":"VPC"
+                },
+                "GroupDescription":"Hosting API Aurora access",
+                "SecurityGroupIngress":[
+                    {
+                        "IpProtocol":"tcp",
+                        "FromPort":"5432",
+                        "ToPort":"5432"
+                    }
+                ]
+            }
+        },
+        "DBParamGroup":{
+            "Type":"AWS::RDS::DBParameterGroup",
+            "Properties":{
+                "Description":"Database Parameter Group + pg_stat_statements",
+                "Family":"postgres9.6",
+                "Parameters":{
+                    "shared_preload_libraries":"pg_stat_statements"
+                }
+            }
+        },
+        "DBSubnetGroup":{
+            "Type":"AWS::RDS::DBSubnetGroup",
+            "Properties":{
+                "DBSubnetGroupDescription":"DB Private Subnet",
+                "SubnetIds":[
+                    { "Ref":"SubnetZone1" },
+                    { "Ref":"SubnetZone2" }
+                ]
+            }
+        },
+        "DBInstance":{
+            "Type":"AWS::RDS::DBInstance",
+            "Properties":{
+                "Engine":"postgres",
+                "MasterUsername": { "Ref" : "MasterUsername" },
+                "MasterUserPassword": { "Ref" : "MasterPassword" },
+                "DBInstanceClass":"db.t2.small",
+                "DBSubnetGroupName":{
+                    "Ref":"DBSubnetGroup"
+                },
+                "DBParameterGroupName":{
+                    "Ref":"DBParamGroup"
+                },
+                "StorageEncrypted":false,
+                "VPCSecurityGroups":[{
+                    "Ref":"DbSecurityGroup"
+                }],
+                "AllocatedStorage": "10"
+            }
+        }
+    }
+}

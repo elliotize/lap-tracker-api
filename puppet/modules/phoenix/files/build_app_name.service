@@ -1,0 +1,11 @@
+[Unit]
+Description=Builds app
+
+[Service]
+Type=oneshot
+
+WorkingDirectory=/var/app_name
+ExecStart=/bin/sh -c -l "/usr/bin/elixir/bin/mix local.hex --force"
+
+[Install]
+WantedBy=multi-user.target

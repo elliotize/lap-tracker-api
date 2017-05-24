@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: app_name/
+    destination: /var/app_name/
+hooks:
+  BeforeInstall:
+    - location: bin/clean.sh
+  ApplicationStart:
+    - location: bin/start.sh

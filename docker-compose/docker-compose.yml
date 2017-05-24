@@ -1,0 +1,19 @@
+version: "3.1"
+services:
+  phoenix:
+    environment:
+      container: docker
+    command: "/usr/sbin/init"
+    volumes:
+      - "./deploy:/deploy"
+      - "../app_name:/var/app_name"
+      - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    image: 'phoenix:latest'
+    ports:
+      - 4000
+      - 22
+    privileged: true
+    tmpfs:
+      - /run
+      - /tmp
