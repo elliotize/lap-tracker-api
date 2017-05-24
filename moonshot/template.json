@@ -3,7 +3,7 @@
     "Parameters" : {
         "ArtifactBucket" : {
             "Type" : "String",
-            "Default" : "phoenix-service",
+            "Default" : "lap-tracker",
             "Description" : "The S3 bucket that contains the build artifacts that CodeDeploy will deploy."
         },
         "AvailabilityZone1" : {
@@ -21,12 +21,12 @@
         },
         "MasterUsername": {
           "Type" : "String",
-          "Default" : "phoenix",
+          "Default" : "laptracker",
           "Description" : "The desired number of EC2 instances used for the application."
         },
         "MasterPassword": {
           "Type" : "String",
-          "Default" : "phoenix123",
+          "Default" : "laptracker",
           "Description" : "The desired number of EC2 instances used for the application."
         }
     },
@@ -343,10 +343,7 @@
             "Type":"AWS::RDS::DBParameterGroup",
             "Properties":{
                 "Description":"Database Parameter Group + pg_stat_statements",
-                "Family":"postgres9.6",
-                "Parameters":{
-                    "shared_preload_libraries":"pg_stat_statements"
-                }
+                "Family":"aurora5.6"
             }
         },
         "DBSubnetGroup":{
@@ -362,21 +359,26 @@
         "DBInstance":{
             "Type":"AWS::RDS::DBInstance",
             "Properties":{
-                "Engine":"postgres",
-                "MasterUsername": { "Ref" : "MasterUsername" },
-                "MasterUserPassword": { "Ref" : "MasterPassword" },
+                "Engine":"aurora",
+                "DBClusterIdentifier": {"Ref": "DBCluster"},
                 "DBInstanceClass":"db.t2.small",
                 "DBSubnetGroupName":{
                     "Ref":"DBSubnetGroup"
                 },
                 "DBParameterGroupName":{
                     "Ref":"DBParamGroup"
-                },
-                "StorageEncrypted":false,
-                "VPCSecurityGroups":[{
-                    "Ref":"DbSecurityGroup"
-                }],
-                "AllocatedStorage": "10"
+                }
+            }
+        },
+        "DBCluster": {
+            "Type": "AWS::RDS::DBCluster",
+            "Properties": {
+                "DBSubnetGroupName": {"Ref": "DBSubnetGroup"},
+                "Engine": "aurora",
+                "MasterUsername": {"Ref": "MasterUsername"},
+                "MasterUserPassword": {"Ref": "MasterPassword"},
+                "StorageEncrypted": true,
+                "VpcSecurityGroupIds" : [ {"Ref": "DbSecurityGroup"} ]
             }
         }
     }

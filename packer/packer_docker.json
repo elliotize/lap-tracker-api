@@ -19,10 +19,9 @@
     {
       "type": "puppet-masterless",
       "puppet_bin_dir": "/opt/puppetlabs/bin/",
-      "manifest_file": "../puppet/manifests/{{user `server_type`}}.pp",
+      "manifest_file": "../puppet/manifests/phoenix.pp",
       "module_paths": [
-        "../puppet/modules",
-        "../puppet/.tmp/librarian/cache/source/puppet/forge/forgeapi_puppetlabs_com"
+        "../puppet/modules"
       ],
       "prevent_sudo" : true
     }
@@ -30,7 +29,7 @@
   "post-processors": [
     {
       "type": "docker-import",
-      "repository": "{{user `server_type`}}",
+      "repository": "phoenix",
       "tag": "latest"
     }
   ]

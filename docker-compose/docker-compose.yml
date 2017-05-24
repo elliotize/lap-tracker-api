@@ -17,3 +17,8 @@ services:
     tmpfs:
       - /run
       - /tmp
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: docker
+      POSTGRES_USER: docker
