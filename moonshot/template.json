@@ -33,6 +33,11 @@
           "Type" : "String",
           "Default" : "laptracker",
           "Description" : "The desired number of EC2 instances used for the application."
+        },
+        "DbName": {
+          "Type" : "String",
+          "Default" : "laptracker",
+          "Description" : "The desired number of EC2 instances used for the application."
         }
     },
     "Outputs" : {
@@ -48,7 +53,7 @@
             "ap-southeast-2" :   { "AMI" : "" },
             "eu-central-1" :     { "AMI" : "" },
             "eu-west-1" :        { "AMI" : "" },
-            "us-east-1" :        { "AMI" : "ami-13572c05" },
+            "us-east-1" :        { "AMI" : "ami-2a56143c" },
             "us-west-2" :        { "AMI" : "" }
         }
     },
@@ -128,8 +133,8 @@
                 "SecurityGroupIngress" : [
                     {
                         "IpProtocol" : "tcp",
-                        "FromPort" : "4000",
-                        "ToPort" : "4000",
+                        "FromPort" : "80",
+                        "ToPort" : "80",
                         "CidrIp" : "0.0.0.0/0"
                     }
                 ]
@@ -140,8 +145,8 @@
             "Properties" : {
                 "Listeners" : [
                     {
-                        "InstancePort" : "4000",
-                        "LoadBalancerPort" : "4000",
+                        "InstancePort" : "80",
+                        "LoadBalancerPort" : "80",
                         "Protocol" : "HTTP"
                     }
                 ],
@@ -157,7 +162,7 @@
                 "HealthCheck" : {
                     "HealthyThreshold" : "3",
                     "Interval" : "15",
-                    "Target" : "HTTP:4000/",
+                    "Target" : "HTTP:80/",
                     "Timeout" : "5",
                     "UnhealthyThreshold" : "3"
                 },
@@ -256,8 +261,8 @@
                 "SecurityGroupIngress" : [
                     {
                         "IpProtocol" : "tcp",
-                        "FromPort" : "4000",
-                        "ToPort" : "4000",
+                        "FromPort" : "80",
+                        "ToPort" : "80",
                         "SourceSecurityGroupId" : { "Ref" : "SecurityGroupElb" }
                     },
                     {
@@ -287,14 +292,12 @@
                 "SecurityGroups" : [ { "Ref" : "SecurityGroup" } ],
                 "KeyName": "hosting-dev",
                 "UserData" : {
-                    "Fn::Base64" : { "Fn::Join" : [ "\n", [
-                        "#!/bin/bash -v",
-                        "curl https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install > /tmp/install.sh",
-                        "chmod +x /tmp/install.sh",
-                        "sudo /tmp/install.sh auto",
-                        "rm /tmp/install.sh",
-                        "DB_USER=", { "Ref" : "MasterUsername" },
-                        "DB_PASSWORD=", { "Ref" : "MasterPassword" }
+                    "Fn::Base64" : { "Fn::Join" : [ "", [
+                        "[Service]", "\n",
+                        "Environment=DB_USER=", { "Ref" : "MasterUsername" }, "\n",
+                        "Environment=DB_PASS=", { "Ref" : "MasterPassword" }, "\n",
+                        "Environment=DB_NAME=", { "Ref" : "DbName" }, "\n",
+                        "Environment=DB_HOST=", { "Fn::GetAtt" : [ "DBCluster", "Endpoint.Address"] }, "\n"
                     ] ] }
                 }
             }
@@ -308,7 +311,7 @@
                     { "Ref" : "AvailabilityZone2" }
                 ],
                 "DesiredCapacity" : { "Ref" : "DesiredCapacity" },
-                "HealthCheckGracePeriod" : "9000",
+                "HealthCheckGracePeriod" : "60",
                 "HealthCheckType" : "ELB",
                 "LaunchConfigurationName" : { "Ref" : "LaunchConfiguration" },
                 "LoadBalancerNames" : [ { "Ref" : "LoadBalancer" } ],
@@ -337,8 +340,8 @@
                 "SecurityGroupIngress":[
                     {
                         "IpProtocol":"tcp",
-                        "FromPort":"5432",
-                        "ToPort":"5432"
+                        "FromPort":"3306",
+                        "ToPort":"3306"
                     }
                 ]
             }
@@ -381,6 +384,7 @@
                 "Engine": "aurora",
                 "MasterUsername": {"Ref": "MasterUsername"},
                 "MasterUserPassword": {"Ref": "MasterPassword"},
+                "DatabaseName": {"Ref": "DbName"},
                 "StorageEncrypted": true,
                 "VpcSecurityGroupIds" : [ {"Ref": "DbSecurityGroup"} ]
             }
@@ -420,7 +424,7 @@
             "Type" : "AWS::S3::Bucket",
             "Properties" : {
                 "BucketName" : { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "tracking-image-bucket" ] ] },
-                "LifecycleConfiguration" : { 
+                "LifecycleConfiguration" : {
                     "Rules": [
                         {
                           "Id": "DeleteEverythingDaily",
@@ -428,15 +432,15 @@
                           "Status": "Enabled",
                           "ExpirationInDays" : "1"
                         }
-                    ] 
+                    ]
                 },
                 // README - Because Amazon is bad this needs to be commented out for the inital
-                // deployment and then updated afterwards. 
+                // deployment and then updated afterwards.
                 "NotificationConfiguration" : {
                     "LambdaConfigurations" : [
                         {
                             "Event" : "s3:ObjectCreated:*",
-                            "Function" : { "Fn::GetAtt": ["WorkerLambdaFunction", "Arn"] } 
+                            "Function" : { "Fn::GetAtt": ["WorkerLambdaFunction", "Arn"] }
                         }
                     ]
                 }

@@ -1,4 +1,6 @@
 class platform::base {
+  include '::ruby'
+
   file { '/root/.ssh/authorized_keys':
     require => File['/root/.ssh/'],
     ensure  => present,
@@ -22,20 +24,22 @@ class platform::base {
   class { '::rvm': }
 
   rvm_system_ruby {
-    'ruby-2.4.1':
+    'ruby-2.3.1':
       ensure      => 'present',
       default_use => true
   }
 
-  # This was a quick hack because why install two versions
-  # of ruby when we can just link.
-  exec { 'link ruby library':
-    command => "/usr/bin/ln -sfn /usr/local/rvm/rubies/ruby-2.3.1/bin/ruby /usr/bin/ruby"
-  }
-
-  include '::codedeploy'
-
   file { '/root/.ssh/':
       ensure => 'directory',
   }
+
+  package { 'mysql-devel':
+    ensure => latest,
+  }
+
+  package { 'cmake':
+    ensure => latest,
+  }
+
+  include '::codedeploy'
 }
