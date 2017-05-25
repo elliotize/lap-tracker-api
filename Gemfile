@@ -16,6 +16,7 @@ group :development do
   gem 'thin'
   gem 'rspec'
   gem 'pry-byebug'
+  gem 'rack-test'
 end
 
 gem 'mysql2'

@@ -7,7 +7,7 @@ namespace :db do
   desc "Run migrations"
   task :migrate, [:version] do |t, args|
     require "sequel"
-    config = AppConfig.new
+    config = AppConfig.instance
     Sequel.extension :migration
     if args[:version]
       puts "Migrating to version #{args[:version]}"
@@ -21,8 +21,7 @@ namespace :db do
   desc 'Populate the database with dummy data'
   task 'populate' do
   require 'securerandom'
-    config = AppConfig.new
-    config.initialize_database
+    config = AppConfig.instance
     Person.insert(
       first_name: 'John',
       last_name: 'Smith',
@@ -35,6 +34,7 @@ end
 # Run the server with shotgun for development
 desc "Start the server for development"
 task "run", [:port] do |t, args|
+  ENV['RACK_ENV'] = 'dev'
   default_port = "9292"
   host = "localhost"
 

@@ -1,19 +1,33 @@
 require 'require_all'
 require 'yaml'
+require 'singleton'
 
 class AppConfig
+  include Singleton
+
   def self.load
     file = File.join(__dir__, '..', 'config.yml')
-    new(YAML.load_file(file))
+    config = begin
+      YAML.load_file(file)
+    rescue
+      {}
+    end
+    config_object = instance
+    config_object.set_config(config)
+    config_object
   end
 
-  def initialize(hash = {})
+  def initialize
+    @hash = {}
+    @db ||= initialize_database
+  end
+
+  def set_config(hash = {})
     @hash = hash
-    initialize_database
   end
 
   def db
-    @db ||= initialize_database
+    @db
   end
 
   def initialize_database
@@ -41,14 +55,27 @@ class AppConfig
   private
 
   def is_development?
-    !ENV.key?('DB_HOST')
+    !is_production? && !is_testing?
+  end
+
+  def is_production?
+    ENV['RACK_ENV'] == 'production'
+  end
+
+  def is_testing?
+    ENV['RACK_ENV'] == 'test'
   end
 
   def database_connection
-    if is_development?
+    case true
+    when is_development?
       "sqlite://#{File.join(__dir__, '../database.db')}"
-    else
+    when is_testing?
+      'sqlite::memory:'
+    when is_production?
       "mysql2://#{ENV['DB_USER']}:#{ENV['DB_PASS']}@#{ENV['DB_HOST']}/#{ENV['DB_NAME']}"
+    else
+      raise 'Unknown rack environment'
     end
   end
 
