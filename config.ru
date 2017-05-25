@@ -11,5 +11,6 @@ require_relative 'src/load.rb'
 
 AppConfig.instance
 
-run PersonController
-run EventController
+
+map('/') { run PersonController }
+map('/event') { run EventController }
