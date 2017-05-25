@@ -5,6 +5,8 @@ gem 'docker-compose'
 
 gem 'sinatra'
 gem 'sequel'
+gem 'omniauth'
+gem 'omniauth-google-oauth2'
 
 gem 'require_all'
 

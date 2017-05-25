@@ -1,9 +1,12 @@
 require 'sinatra'
 require 'json'
 
-class PersonController < Sinatra::Base
-
+class PersonController < BaseController
   set :logging, true
+
+  get "/" do
+    'stuff'
+  end
 
   get "/me" do
     require_valid_acquia_user!

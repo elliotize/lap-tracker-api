@@ -1,4 +1,5 @@
 require 'require_all'
+require 'yaml'
 
 class AppConfig
   def self.load
