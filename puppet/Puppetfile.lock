@@ -5,12 +5,15 @@ FORGE
     maestrodev-rvm (1.13.1)
       golja-gnupg (>= 1.2.0)
       puppetlabs-stdlib (>= 4.2.0)
+    puppetlabs-ruby (0.6.0)
+      puppetlabs-stdlib (< 6.0.0, >= 4.6.0)
     puppetlabs-stdlib (4.16.0)
     walkamongus-codedeploy (1.0.1)
       puppetlabs-stdlib (< 5.0.0, >= 3.2.0)
 
 DEPENDENCIES
   maestrodev-rvm (= 1.13.1)
+  puppetlabs-ruby (= 0.6.0)
   puppetlabs-stdlib (= 4.16.0)
   walkamongus-codedeploy (= 1.0.1)
 

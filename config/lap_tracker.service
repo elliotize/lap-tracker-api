@@ -3,9 +3,10 @@ Description=App Description
 
 [Service]
 Type=simple
+Environment=RACK_ENV=production
 
 WorkingDirectory=/var/lap_tracker
-ExecStart=/bin/sh -c -l "/usr/bin/bundle exec ruby app.rb -o 127.0.0.1 -e production -p 4567"
+ExecStart=/bin/bash -c -l "bundle exec rackup -p 80"
 
 [Install]
 WantedBy=multi-user.target

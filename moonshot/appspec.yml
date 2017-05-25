@@ -1,8 +1,10 @@
 version: 0.0
 os: linux
 files:
-  - source: src/
-    destination: /var/laptracker/
+  - source: lap_tracker/
+    destination: /var/lap_tracker/
+  - source: lap_tracker/config/lap_tracker.service
+    destination: /etc/systemd/system/lap_tracker.service
 hooks:
   BeforeInstall:
     - location: bin/clean.sh
