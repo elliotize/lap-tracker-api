@@ -6,15 +6,10 @@
             "Default" : "lap-tracker",
             "Description" : "The S3 bucket that contains the build artifacts that CodeDeploy will deploy."
         },
-        "TrackingImageBucketName" : {
+        "StackPrefix" : {
             "Type" : "String",
-            "Default" : "lap-tracker-tracking-image-bucket",
-            "Description" : "The S3 bucket that contains lap tracking images."
-        },
-        "ReferenceImageBucketName" : {
-            "Type" : "String",
-            "Default" : "lap-tracker-reference-image-bucket",
-            "Description" : "The S3 bucket that contains reference images for the rekognition api."
+            "Default" : "",
+            "Description" : "Stack naming prefix"
         },
         "AvailabilityZone1" : {
             "Type": "AWS::EC2::AvailabilityZone::Name",
@@ -390,28 +385,6 @@
                 "VpcSecurityGroupIds" : [ {"Ref": "DbSecurityGroup"} ]
             }
         },
-        "TrackingImageBucket":{
-            "Type" : "AWS::S3::Bucket",
-            "Properties" : {
-                "BucketName" : { "Ref" : "TrackingImageBucketName" },
-                "LifecycleConfiguration" : { 
-                    "Rules": [
-                        {
-                          "Id": "DeleteEverythingDaily",
-                          "Prefix": "",
-                          "Status": "Enabled",
-                          "ExpirationInDays" : "1"
-                        }
-                    ] 
-                }
-            }
-        },
-        "ReferenceImageBucket":{
-            "Type" : "AWS::S3::Bucket",
-            "Properties" : {
-                "BucketName" : { "Ref" : "ReferenceImageBucketName" }
-            }
-        },
         "IAMUser": {
             "Type": "AWS::IAM::User"
         },
@@ -431,10 +404,10 @@
                       "Effect": "Allow",
                       "Action": ["s3:*"],
                       "Resource": [
-                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "TrackingImageBucketName" } ] ] },
-                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "TrackingImageBucketName" }, "/*" ] ] },
-                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "ReferenceImageBucketName" } ] ] },
-                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Ref": "ReferenceImageBucketName" }, "/*" ] ] }
+                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "tracking-image-bucket" ] ] } ] ] },
+                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "tracking-image-bucket" ] ] }, "/*" ] ] },
+                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "reference-image-bucket" ] ] } ] ] },
+                        { "Fn::Join": [ "", [ "arn:aws:s3:::", { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "reference-image-bucket" ] ] }, "/*" ] ] }
                       ]
                     }
                   ]
@@ -442,6 +415,64 @@
                 "Users": [ { "Ref": "IAMUser" } ]
             },
             "DependsOn" : [ "TrackingImageBucket", "ReferenceImageBucket" ]
+        },
+        "TrackingImageBucket":{
+            "Type" : "AWS::S3::Bucket",
+            "Properties" : {
+                "BucketName" : { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "tracking-image-bucket" ] ] },
+                "LifecycleConfiguration" : { 
+                    "Rules": [
+                        {
+                          "Id": "DeleteEverythingDaily",
+                          "Prefix": "",
+                          "Status": "Enabled",
+                          "ExpirationInDays" : "1"
+                        }
+                    ] 
+                },
+                // README - Because Amazon is bad this needs to be commented out for the inital
+                // deployment and then updated afterwards. 
+                "NotificationConfiguration" : {
+                    "LambdaConfigurations" : [
+                        {
+                            "Event" : "s3:ObjectCreated:*",
+                            "Function" : { "Fn::GetAtt": ["WorkerLambdaFunction", "Arn"] } 
+                        }
+                    ]
+                }
+            },
+            "DependsOn": [ "LambdaInvokePermission" ]
+        },
+        "ReferenceImageBucket":{
+            "Type" : "AWS::S3::Bucket",
+            "Properties" : {
+                "BucketName" : { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "reference-image-bucket" ] ] }
+            }
+        },
+        "LambdaInvokePermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "FunctionName" : { "Fn::GetAtt" : ["WorkerLambdaFunction", "Arn"] },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "s3.amazonaws.com"
+            },
+            "DependsOn": [ "WorkerLambdaFunction" ]
+        },
+        "WorkerLambdaFunction":{
+            "Type" : "AWS::Lambda::Function",
+            "Properties" : {
+                "Description" : "A Lambda Function for interfacing with AWS Rekognition",
+                "FunctionName" :  { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "worker-lambda-function" ] ] },
+                "Role" : { "Fn::GetAtt": ["WorkerExecutionRole", "Arn"] },
+                "Code": {
+                          "S3Bucket": "lap-tracker",
+                          "S3Key": "event-gen.zip"
+                },
+                "Timeout": 60,
+                "Handler": "lambda_function.lambda_handler",
+                "Runtime": "python2.7",
+                "MemorySize": 128
+            }
         },
         "WorkerExecutionRole": {
             "Type": "AWS::IAM::Role",
@@ -467,7 +498,7 @@
             ],
             "Type": "AWS::IAM::Policy",
             "Properties": {
-                "PolicyName": "WorkerExecutionPolicy",
+                "PolicyName": { "Fn::Join" : [ "-", [ { "Ref" : "StackPrefix" }, "worker-execution-policy" ] ] },
                 "Roles": [
                     {"Ref": "WorkerExecutionRole"}
                 ],
@@ -477,32 +508,13 @@
                         {
                             "Effect": "Allow",
                             "Action": [
-                                "rekognition:*"
+                                "rekognition:*",
+                                "s3:*"
                             ],
                             "Resource": ["*"]
                         }
                     ]
                 }
-            }
-        },
-        "WorkerLambdaFunction":{
-            "Type" : "AWS::Lambda::Function",
-            "Properties" : {
-                "Description" : "A Lambda Function for interfacing with AWS Rekognition",
-                "FunctionName" : "LapTrackerLambdaFunction",
-                "Role" : { "Fn::GetAtt": ["WorkerExecutionRole", "Arn"] },
-                "Code": {
-                    "ZipFile": { "Fn::Join": ["\n", [
-                        "import json",
-                        "def lambda_handler(event, context):",
-                        "    lambdaRetVal = {\"Hello\":\"World\"}",
-                        "    return json.dumps(lambdaRetVal)"]
-                   ]}
-                },
-                "Timeout": 60,
-                "Handler": "lambda_function.lambda_handler",
-                "Runtime": "python2.7",
-                "MemorySize": 128
             }
         }
     }
