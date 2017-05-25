@@ -1,3 +1,5 @@
+output.tar.gz
+puppet/.tmp/
 *.gem
 *.rbc
 /.config
