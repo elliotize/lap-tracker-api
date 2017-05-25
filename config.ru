@@ -11,5 +11,3 @@ Sequel::Model.db = Sequel.sqlite(db)
 require_relative 'src/load.rb'
 
 run PersonController
-
-

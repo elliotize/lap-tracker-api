@@ -1,11 +1,14 @@
-require 'sinatra'
+class PersonController < BaseController
+  get "/" do
+    "slash!"
+  end
 
-class PersonController < Sinatra::Base
   get "/me" do
+    require_valid_acquia_user!
     "Hello, World!"
   end
 
-  get "/:id" do
+  get "/person/:id" do
     "Individual person by ID = #{params[:id]}"
   end
 end
