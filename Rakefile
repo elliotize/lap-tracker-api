@@ -22,11 +22,17 @@ namespace :db do
   task 'populate' do
   require 'securerandom'
     config = AppConfig.instance
+    face_id = SecureRandom.uuid
     Person.insert(
       first_name: 'John',
       last_name: 'Smith',
       email: 'john.smith@example.com',
-      face_id: SecureRandom.uuid
+      face_id: face_id
+    )
+    Event.insert(
+       face_id: face_id,
+       location: 'A',
+       timestamp: Time.now
     )
   end
 end

@@ -3,6 +3,7 @@ require_relative '../app_config'
 require 'sinatra'
 
 class BaseController < Sinatra::Base
+  set :logging, true
   use Rack::Session::Cookie, {
       key: 'rack.session',
       path: '/',

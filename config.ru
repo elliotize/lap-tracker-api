@@ -12,3 +12,4 @@ require_relative 'src/load.rb'
 AppConfig.instance
 
 run PersonController
+run EventController
