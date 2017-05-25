@@ -8,7 +8,7 @@ OUTPUT_FILE=output.tar.gz
 mkdir $BUILD_DIR
 cp $PROJECT_DIR/moonshot/appspec.yml $BUILD_DIR
 cp -r $PROJECT_DIR/moonshot/bin $BUILD_DIR
-cp -r $PROJECT_DIR/app_name $BUILD_DIR
+cp -r $PROJECT_DIR/src $BUILD_DIR
 
 cd $BUILD_DIR
 tar -zcvf output.tar.gz ./
