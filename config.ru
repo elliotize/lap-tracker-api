@@ -1,15 +1,14 @@
 require 'sequel'
+require 'sinatra'
+
+require_relative 'src/app_config'
+require_relative 'src/load.rb'
 
 # DB_HOST
 # DB_USER
 # DB_PASS
 # DB_NAME
 
-db = File.join(__dir__, 'filename.db')
-Sequel::Model.db = Sequel.sqlite(db)
-
-require_relative 'src/load.rb'
+AppConfig.new
 
 run PersonController
-
-

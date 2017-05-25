@@ -1,11 +1,24 @@
+require 'require_all'
+
 class AppConfig
   def self.load
     file = File.join(__dir__, '..', 'config.yml')
     new(YAML.load_file(file))
   end
 
-  def initialize(hash)
+  def initialize(hash = {})
     @hash = hash
+    initialize_database
+  end
+
+  def db
+    @db ||= initialize_database
+  end
+
+  def initialize_database
+    db = Sequel.connect(database_connection)
+    require_all 'src/model/*.rb'
+    db
   end
 
   def oauth_enabled?
@@ -25,6 +38,18 @@ class AppConfig
   end
 
   private
+
+  def is_development?
+    !ENV.key?('DB_HOST')
+  end
+
+  def database_connection
+    if is_development?
+      "sqlite://#{File.join(__dir__, '../database.db')}"
+    else
+      "mysql2://#{ENV['DB_USER']}:#{ENV['DB_PASS']}@#{ENV['DB_HOST']}/#{ENV['DB_NAME']}"
+    end
+  end
 
   def oauth_options
     @hash.fetch('oauth', {})
