@@ -19,7 +19,7 @@
     {
       "type": "puppet-masterless",
       "puppet_bin_dir": "/opt/puppetlabs/bin/",
-      "manifest_file": "../puppet/manifests/phoenix.pp",
+      "manifest_file": "../puppet/manifests/lap_tracker.pp",
       "module_paths": [
         "../puppet/modules"
       ],
@@ -29,7 +29,7 @@
   "post-processors": [
     {
       "type": "docker-import",
-      "repository": "phoenix",
+      "repository": "lap_tracker",
       "tag": "latest"
     }
   ]

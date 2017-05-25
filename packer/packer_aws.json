@@ -9,7 +9,7 @@
       "ssh_pty" : false,
       "ssh_username": "centos",
       "user_data_file" : "../puppet/packet_user_helper.txt",
-      "ami_name": "{{user `server_type`}} {{timestamp}}"
+      "ami_name": "lap_tracker {{timestamp}}"
     }
   ],
   "provisioners": [
@@ -23,7 +23,7 @@
     {
       "type": "puppet-masterless",
       "puppet_bin_dir": "/opt/puppetlabs/bin/",
-      "manifest_file": "../puppet/manifests/{{user `server_type`}}.pp",
+      "manifest_file": "../puppet/manifests/lap_tracker.pp",
       "module_paths": [
         "../puppet/modules"
       ]
