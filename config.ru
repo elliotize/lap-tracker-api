@@ -9,6 +9,6 @@ require_relative 'src/load.rb'
 # DB_PASS
 # DB_NAME
 
-AppConfig.new
+AppConfig.instance
 
 run PersonController

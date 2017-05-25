@@ -9,37 +9,38 @@ class BaseController < Sinatra::Base
       secret: '637DE9EF-A278-46D1-8351-F0D7F1175D5F'
   }
 
-  config = AppConfig.load
-  # TODO: Single config thing someday
-  OmniAuth.config.full_host = config.oauth_redirect_uri
+  if AppConfig.instance.oauth_enabled?
+    config = AppConfig.load
+    # TODO: Single config thing someday
+    OmniAuth.config.full_host = config.oauth_redirect_uri
 
-  # RESUME HERE
-  begin
-    @request.env['HTTPS'] = 'on'
-    OmniAuth.config.ssl = true
-    OmniAuth.ssl = true
-  rescue => e
-    $stderr.puts e.message
-  end
-
-  OmniAuth.config.on_failure = Proc.new { |env|
-    OmniAuth::FailureEndpoint.new(env).redirect_to_failure
-  }
-
-  use OmniAuth::Builder do
-    options = {
-      scope: 'userinfo.email,userinfo.profile,plus.me',
-      approval_prompt: 'auto',
-      redirect_uri: "#{config.oauth_redirect_uri}/auth/google_oauth2/callback",
-    }
-
-    # Certified Hackathon Quality - Peter Drake
-    # TONOTDO: Release to prod.
-    if RUBY_PLATFORM =~ /darwin/
-      OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+    begin
+      @request.env['HTTPS'] = 'on'
+      OmniAuth.config.ssl = true
+      OmniAuth.ssl = true
+    rescue => e
+      $stderr.puts e.message
     end
 
-    provider :google_oauth2, config.oauth_key, config.oauth_password, options
+    OmniAuth.config.on_failure = Proc.new { |env|
+      OmniAuth::FailureEndpoint.new(env).redirect_to_failure
+    }
+
+    use OmniAuth::Builder do
+      options = {
+        scope: 'userinfo.email,userinfo.profile,plus.me',
+        approval_prompt: 'auto',
+        redirect_uri: "#{config.oauth_redirect_uri}/auth/google_oauth2/callback",
+      }
+
+      # Certified Hackathon Quality - Peter Drake
+      # TONOTDO: Release to prod.
+      if RUBY_PLATFORM =~ /darwin/
+        OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+      end
+
+      provider :google_oauth2, config.oauth_key, config.oauth_password, options
+    end
   end
 
   helpers do
