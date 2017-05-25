@@ -20,6 +20,7 @@ end
 RSpec.configure do |c|
   c.include RSpecMixin
   c.before(:each) do
+    Sequel::Migrator.run(config.db, File.join(__dir__, '../src/migrations'), target: 0)
     Sequel::Migrator.run(config.db, File.join(__dir__, '../src/migrations'))
   end
 end
