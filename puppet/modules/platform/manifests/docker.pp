@@ -8,4 +8,7 @@ class platform::docker{
   package { 'initscripts':
     ensure => 'installed'
   }
+  package { 'which':
+    ensure => 'installed',
+  }
 }

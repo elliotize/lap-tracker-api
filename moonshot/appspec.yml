@@ -1,8 +1,8 @@
 version: 0.0
 os: linux
 files:
-  - source: app_name/
-    destination: /var/app_name/
+  - source: src/
+    destination: /var/laptracker/
 hooks:
   BeforeInstall:
     - location: bin/clean.sh
