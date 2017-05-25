@@ -19,6 +19,7 @@ describe EventController do
       location: 'A'
     }
   }
+
   context 'POST' do
     before(:each) do
       Person.insert(
@@ -28,9 +29,33 @@ describe EventController do
 
     subject { post '/event', event }
 
-    it "should create an event object" do
+    it "should be successful" do
       subject
       expect(last_response).to be_ok
+    end
+
+    it "should match the person face id" do
+      subject
+      expect(last_object['face_id']).to eq(person[:face_id])
+    end
+  end
+
+  context 'GET' do
+    let(:event_id) { Event.insert(event) }
+    before(:each) do
+      Person.insert(person)
+    end
+
+    subject { get "/event/#{event_id}" }
+
+    it "should be successful" do
+      subject
+      expect(last_response).to be_ok
+    end
+
+    it "should match the person face id" do
+      subject
+      expect(last_object['face_id']).to eq(person[:face_id])
     end
   end
 end

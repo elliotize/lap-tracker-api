@@ -24,3 +24,7 @@ RSpec.configure do |c|
     Sequel::Migrator.run(config.db, File.join(__dir__, '../src/migrations'))
   end
 end
+
+def last_object
+  JSON.parse!(last_response.body)
+end

@@ -24,7 +24,7 @@ Sequel.migration do
 
     create_table(:events) do
       primary_key :id
-      foreign_key :face_id, :people, key: :face_id
+      foreign_key :face_id, :people, key: :face_id, type: String
       DateTime :timestamp, null: false
       String :location, null: false
     end
