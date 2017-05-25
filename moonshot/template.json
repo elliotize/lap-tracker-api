@@ -8,7 +8,7 @@
         },
         "StackPrefix" : {
             "Type" : "String",
-            "Default" : "",
+            "Default" : "lap-tracker",
             "Description" : "Stack naming prefix"
         },
         "AvailabilityZone1" : {
