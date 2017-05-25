@@ -78,6 +78,8 @@ class BaseController < Sinatra::Base
   end
 
   def require_valid_acquia_user!
+    return unless AppConfig.instance.oauth_enabled?
+
     unless session[:authenticated] || request.path =~ %r{^/login|^/auth}
       redirect '/login'
     end
