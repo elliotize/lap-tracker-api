@@ -26,7 +26,11 @@ class EventController < BaseController
   post "/event" do
     content_type :json
     event_id = begin
-      Event.insert(params) || halt(400, {}.to_json)
+      Event.insert(
+        face_id: params['face_id'],
+        timestamp: params['timestamp'],
+        location: params['location']
+      ) || halt(400, {}.to_json)
     rescue Sequel::ForeignKeyConstraintViolation
       halt(400, {error: 'Bad Request'}.to_json)
     end
