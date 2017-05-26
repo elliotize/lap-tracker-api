@@ -27,7 +27,7 @@ describe EventController do
       )
     end
 
-    subject { post '/event', event }
+    subject { post '/event', JSON.dump(event) }
 
     it "should be successful" do
       subject
