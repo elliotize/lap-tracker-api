@@ -6,7 +6,7 @@ Type=simple
 Environment=RACK_ENV=production
 
 WorkingDirectory=/var/lap_tracker
-ExecStart=/bin/bash -c -l "bundle exec rackup -p 80"
+ExecStart=/bin/bash -c -l "bundle exec rackup -p 80 -o 0.0.0.0"
 
 [Install]
 WantedBy=multi-user.target

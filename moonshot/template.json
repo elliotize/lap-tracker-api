@@ -160,11 +160,11 @@
                     { "Ref" : "SecurityGroupElb" }
                 ],
                 "HealthCheck" : {
-                    "HealthyThreshold" : "3",
+                    "HealthyThreshold" : "10",
                     "Interval" : "15",
                     "Target" : "HTTP:80/",
                     "Timeout" : "5",
-                    "UnhealthyThreshold" : "3"
+                    "UnhealthyThreshold" : "10"
                 },
                 "Subnets" : [
                     { "Ref" : "SubnetZone1" },

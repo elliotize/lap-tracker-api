@@ -168,7 +168,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  commonmarker
   docker-compose
   moonshot (~> 1.1.0.beta4)
   mysql2

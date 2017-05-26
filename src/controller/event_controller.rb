@@ -28,7 +28,7 @@ class EventController < BaseController
     event_id = begin
       Event.insert(
         face_id: params['face_id'],
-        timestamp: params['timestamp'],
+        timestamp: Time.at(params['timestamp'].to_i),
         location: params['location']
       ) || halt(400, {}.to_json)
     rescue Sequel::ForeignKeyConstraintViolation
