@@ -2,10 +2,6 @@ require 'sinatra'
 require 'json'
 
 class PersonController < BaseController
-  get "/" do
-    "test"
-  end
-
   get "/me" do
     require_valid_acquia_user!
     content_type :json
