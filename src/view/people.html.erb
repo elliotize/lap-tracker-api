@@ -17,7 +17,7 @@
 
 
 <div class="container">
-  <h2>LeaderBoard for the <%= @timeframe %></h2>
+  <h2>LeaderBoard</h2>
   <table class="table">
     <thead>
       <tr>
@@ -28,12 +28,12 @@
       </tr>
     </thead>
     <tbody>
-      <% @leaders.each do |l| %>
+      <% @leaders.each do |leader| %>
         <tr>
-          <th>l['rank']</th>
-          <td>l['first']</td>
-          <td>l['last']</td>
-          <td>l['laps']</td>
+          <th><%= leader['rank'] %></th>
+          <td><%= leader['first'] %></td>
+          <td><%= leader['last'] %></td>
+          <td><%= leader['laps'] %></td>
         </tr>
       <% end %>
     </tbody>
