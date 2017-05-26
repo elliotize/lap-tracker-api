@@ -1,7 +1,15 @@
 require 'sinatra'
 require 'json'
+require 'pry'
 
 class EventController < BaseController
+  before do
+    if request.request_method == "POST"
+      body_parameters = request.body.read
+      params.merge!(JSON.parse(body_parameters))
+    end
+  end
+
   get "/events" do
     content_type :json
     events = Event.all || []
