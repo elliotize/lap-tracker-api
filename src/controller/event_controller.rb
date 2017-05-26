@@ -19,13 +19,17 @@ class EventController < BaseController
 
   get "/event/:id" do
     content_type :json
-    event = Event[params[:id]] || halt(404, {}.to_json)
+    event = Event[params[:id]] || halt(404, {error: 'Not Found'}.to_json)
     event.to_hash.to_json
   end
 
   post "/event" do
     content_type :json
-    event_id = Event.insert(params) || halt(400, {}.to_json)
+    event_id = begin
+      Event.insert(params) || halt(400, {}.to_json)
+    rescue Sequel::ForeignKeyConstraintViolation
+      halt(400, {error: 'Bad Request'}.to_json)
+    end
     event = Event[event_id]
     event.to_hash.to_json
   end
